@@ -239,16 +239,6 @@ Type 'exit' to stop
 - **No Telemetry**: No tracking
 - **Offline Ready**: Works without internet
 
-# ⚡ Performance Benchmarks
-
-```
-Index Building:   ~30s (one-time)
-Query Embedding:  ~50ms
-FAISS Search:     ~5ms
-LLM Generation:   2-5s
-Total Cycle:      2-6s
-```
-
 # ⚡ Tuning for Speed
 
 ```python
@@ -287,15 +277,6 @@ $ nohup uv run python main.py > log &
 [Clients] → [Load Balancer]
              ↓
       [Multiple Retrievers]
-```
-
-# 🚢 Storage Scaling
-
-```
-Docs     Index      Build
-10 MB    ~2 MB      ~5s
-100 MB   ~20 MB     ~30s
-1 GB     ~200 MB    ~5min
 ```
 
 # 🔮 Phase 2: Enhanced Features
@@ -355,6 +336,9 @@ uv run python main.py
 
 # Check config
 cat src/config.py
+
+# Full setup, checks and troubleshooting
+see src/COMMANDS.md
 ```
 
 # 📚 Resources
