@@ -246,3 +246,5 @@ python-rag/
 !AGENTS.md
 !Task-RAG.txt
 !CONTEXT.md
+
+src/docs/*
