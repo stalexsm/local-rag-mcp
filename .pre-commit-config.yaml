@@ -1,0 +1,14 @@
+# Style gates on every commit: ruff lint + format (official hooks).
+# ty is intentionally NOT a pre-commit hook — it runs as a local command
+# (`uv run ty check src`) to keep commits fast. See [tool.ty] in
+# pyproject.toml and "Development Checks" in src/COMMANDS.md.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Pinned to the ruff version locked in uv.lock.
+    rev: v0.16.5
+    hooks:
+      # Lint: auto-fix what is safe, fail the commit on the rest.
+      - id: ruff-check
+        args: [--fix]
+      # Format.
+      - id: ruff-format

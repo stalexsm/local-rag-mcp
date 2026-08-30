@@ -146,6 +146,21 @@ uv run ruff format --check .
 # Expected: no findings (exit code 0)
 ```
 
+Lint and format also run as pre-commit hooks on every commit (official
+ruff-check and ruff-format). `ty` is deliberately not a hook — it runs as
+the local command above, keeping commits fast:
+
+```bash
+uv run pre-commit install        # once per clone
+uv run pre-commit run --all-files
+# Expected: Passed (exit code 0)
+
+ruff-check runs with --fix: on failure the hook edits the staged files
+in place — re-add them (`git add`) and commit again. When ruff is bumped
+in uv.lock, update `rev` in .pre-commit-config.yaml to the same version
+so the hook and the local commands above agree.
+```
+
 ## Quick Start Summary
 
 ```bash
