@@ -25,9 +25,17 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pre-commit>=4.0.0",
+    "pytest>=8.0",
     "ruff>=0.14.0",
     "ty>=0.0.1",
 ]
+
+[tool.pytest.ini_options]
+# Pure-seam unit tests (issue #14). Paths are relative to the repository
+# root (the rootdir), so `uv run pytest` works from the root and from src/;
+# `pythonpath` makes the src-run imports (`rag.*`, `config`) resolvable.
+testpaths = ["src/tests"]
+pythonpath = ["src"]
 
 [tool.ruff]
 line-length = 100

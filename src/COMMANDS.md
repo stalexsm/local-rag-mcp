@@ -30,8 +30,8 @@ uv sync
 One command replaces the whole old routine: downloads Python 3.12 if
 missing (pinned in `.python-version`), creates `.venv/` and installs the
 exact versions from `uv.lock` — runtime dependencies plus the dev group
-(ruff, ty, pre-commit). There is no virtual environment to activate:
-`uv run` picks up the project environment automatically.
+(pytest, ruff, ty, pre-commit). There is no virtual environment to
+activate: `uv run` picks up the project environment automatically.
 
 ### 2. Add company documentation
 Put your documents (`.txt`, `.md`, `.pdf`, `.docx`) into `src/docs/`
@@ -140,6 +140,24 @@ When you add new documents or update existing ones:
 
 ## Development Checks
 
+Unit tests cover only the pure seams of hybrid search — the RRF merge
+(`src/rag/merge.py`), the in-memory FTS (`src/rag/fts.py`) and keyword
+parsing (`src/rag/expansion.py`). They run on hand-made chunks and answer
+strings: no mocks of FAISS/Ollama/HTTP, no reading generated artifacts
+(`index.faiss`, `chunks.pkl`):
+
+```bash
+cd src
+uv run pytest
+# Expected: all tests pass (exit code 0)
+```
+
+Everything those tests do not reach — ingest, embedding, the FAISS index,
+MCP, LLM answers — is verified by real runs: rebuild the index and run one
+smoke query, stating what exactly passed. Retrieval quality itself (vector
+vs FTS vs hybrid) is measured by the Search Benchmark above, not by unit
+tests.
+
 Type checking runs in ratchet mode: the baseline is "0 diagnostics", so any
 new output from `ty` is a real regression, not known noise. The initial
 baseline was reached with cheap fixes only (no ignores were needed). New
@@ -192,4 +210,10 @@ uv run python main.py build-index
 
 # 4. Run
 uv run python main.py
+
+# Checks (from the repository root unless stated otherwise)
+uv run pytest          # run from src/: cd src && uv run pytest
+uv run ruff check .
+uv run ruff format --check .
+uv run ty check src
 ```
