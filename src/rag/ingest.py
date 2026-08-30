@@ -46,8 +46,8 @@ def ingest_documents():
                 })
             except Exception as e:
                 print(f"Error loading {path}: {e}")
-        else:
-            [documents.append(doc) for doc in ingest_documents(path)]
+        # Unsupported files (e.g. .gitkeep) are skipped: rglob already
+        # walks subdirectories, so no recursion is needed.
 
     return documents
 
