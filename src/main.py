@@ -17,6 +17,13 @@ def main():
         build_index()
         return
 
+    if len(sys.argv) > 1 and sys.argv[1] == "benchmark":
+        # Search benchmark mode (Recall@5 / MRR, three retrieval modes)
+        from rag.benchmark import run_benchmark
+
+        run_benchmark()
+        return
+
     # Interactive Q&A mode
     assistant = CompanyKBAssistant()
 

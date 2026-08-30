@@ -88,6 +88,19 @@ Then ask questions like:
 
 Type `exit` or `quit` to stop.
 
+### Search Benchmark (Optional)
+
+```bash
+cd src
+uv run python main.py benchmark
+```
+
+Runs the marked query set from `src/rag/benchmark.py` (15 queries,
+relevance at document level) through three modes — vector, FTS (BM25),
+hybrid — and prints a markdown table with Recall@5 and MRR. Requires a
+built index; the hybrid mode additionally queries Ollama for query
+expansion. The current table and its interpretation live in the README.
+
 ## Updating the Knowledge Base
 
 When you add new documents or update existing ones:
