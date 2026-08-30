@@ -1,5 +1,6 @@
 import pickle
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import faiss
@@ -8,13 +9,37 @@ from sentence_transformers import SentenceTransformer
 
 # Add parent directory to path for config import
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from config import CHUNKS_PATH, EMBEDDING_MODEL, FAISS_INDEX_PATH, OLLAMA_MODEL, OLLAMA_URL, TOP_K
+from config import (
+    CANDIDATE_POOL_SIZE,
+    CHUNKS_PATH,
+    EMBEDDING_MODEL,
+    FAISS_INDEX_PATH,
+    HYBRID_SEARCH,
+    OLLAMA_MODEL,
+    OLLAMA_URL,
+    RRF_K,
+    TOP_K,
+)
+from rag.fts import build_fts_index, fts_search
+from rag.merge import rrf_merge
 
 model = SentenceTransformer(EMBEDDING_MODEL)
 
 # Global variables for index and chunks
 index = None
 chunks = []
+# In-memory BM25 index over `chunks` (ADR-0002); None while chunks are empty.
+bm25_index = None
+
+
+def _load_chunks(chunks_path):
+    """Load chunks and rebuild the in-memory BM25 index from them."""
+    global chunks, bm25_index
+    with open(chunks_path, "rb") as f:
+        chunks = pickle.load(f)
+    # ADR-0002: BM25 is built in memory from the loaded chunk set, so it
+    # cannot drift from the FAISS index and creates no third artifact.
+    bm25_index = build_fts_index(chunks)
 
 
 def _ensure_index_exists():
@@ -30,8 +55,7 @@ def _ensure_index_exists():
     if index_path.exists() and chunks_path.exists():
         try:
             index = faiss.read_index(str(index_path))
-            with open(chunks_path, "rb") as f:
-                chunks = pickle.load(f)
+            _load_chunks(chunks_path)
             return True
         except Exception as e:
             print(f"⚠️  Warning: Error loading existing index: {e}")
@@ -47,8 +71,7 @@ def _ensure_index_exists():
         # Load the newly created index
         if index_path.exists() and chunks_path.exists():
             index = faiss.read_index(str(index_path))
-            with open(chunks_path, "rb") as f:
-                chunks = pickle.load(f)
+            _load_chunks(chunks_path)
             print("✅ Index built and loaded successfully")
             return True
         else:
@@ -69,8 +92,31 @@ def _ensure_index_exists():
 _ensure_index_exists()
 
 
+def _vector_positions(query: str, n: int) -> list[int]:
+    """Vector retriever: FAISS top-n candidates as positional chunk indices."""
+    if index is None:
+        return []
+    q_emb = model.encode([query])
+    faiss.normalize_L2(q_emb)
+    scores, ids = index.search(q_emb, n)
+    return [int(i) for i in ids[0] if i != -1]
+
+
+def _fts_positions(query: str) -> list[int]:
+    """FTS retriever: BM25 candidates as positional chunk indices."""
+    if bm25_index is None:
+        return []
+    return fts_search(bm25_index, query, CANDIDATE_POOL_SIZE)
+
+
 def retrieve(query: str):
-    """Retrieve relevant chunks for a query."""
+    """Retrieve relevant chunks for a query.
+
+    Hybrid mode (default): vector and FTS retrievers run in parallel
+    (ADR-0003), their candidate pools fuse via RRF, and the final TOP_K is
+    taken from the merged ranking. A retriever failure degrades to the
+    other one; a query never fails because of search.
+    """
     # Ensure index exists before retrieving (may build it as a side effect).
     if index is None or len(chunks) == 0:
         _ensure_index_exists()
@@ -78,11 +124,26 @@ def retrieve(query: str):
     if index is None or len(chunks) == 0:
         return []
 
-    q_emb = model.encode([query])
-    faiss.normalize_L2(q_emb)
+    if not HYBRID_SEARCH:
+        # Kill-switch: legacy vector-only top-TOP_K behavior.
+        return [chunks[i] for i in _vector_positions(query, TOP_K)]
 
-    scores, ids = index.search(q_emb, TOP_K)
-    return [chunks[i] for i in ids[0]]
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [
+            executor.submit(_vector_positions, query, CANDIDATE_POOL_SIZE),
+            executor.submit(_fts_positions, query),
+        ]
+
+    rankings: list[list[int]] = []
+    for future in futures:
+        try:
+            rankings.append(future.result())
+        except Exception as e:
+            # Degradation: the failed retriever drops out of the merge.
+            print(f"⚠️  Retriever failed ({type(e).__name__}: {e}); merging the survivor")
+
+    merged_positions = rrf_merge(rankings, RRF_K)[:TOP_K]
+    return [chunks[pos] for pos in merged_positions]
 
 
 def build_prompt(query, contexts):

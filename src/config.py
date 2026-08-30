@@ -35,3 +35,11 @@ OLLAMA_MODEL = "qwen3:0.6b"
 
 # RAG retrieval configuration
 TOP_K = 5
+
+# Hybrid search (FTS/BM25 in parallel with vector search, RRF merge)
+# Kill-switch: False restores the legacy vector-only top-TOP_K behavior.
+HYBRID_SEARCH = True
+# Candidates each retriever returns before the RRF merge
+CANDIDATE_POOL_SIZE = 20
+# RRF constant: larger k flattens rank differences between retrievers
+RRF_K = 60
