@@ -14,7 +14,7 @@
 - `src/config.py` — единственный источник настроек (модели, чанкинг, пути, TOP_K).
 - `src/discovery.py` — общий фильтр документов (rglob + поддерживаемые расширения, без тяжёлых импортов); используется `rag/ingest.py` и `mcp/server.py`.
 - `src/rag/` — пайплайн: ingest → chunk → embed → build_index → query.
-- `src/tests/` — pytest-тесты чистых швов гибридного поиска (merge, fts, expansion).
+- `src/tests/` — pytest-тесты чистых швов гибридного поиска (merge, fts, expansion), песочницы и чтения вопроса из stdin (cli_input).
 - `src/mcp/` — инструменты FastMCP (`server.py`: read/list/search) и `client.py`; `src/assistant.py`, `src/main.py` — оркестратор и CLI.
 - `src/COMMANDS.md` — установка (`uv sync`), запуск, проверки качества, траблшутинг; корневой `README.md` — обзор архитектуры; `docs/adr/` — архитектурные решения.
 - `Task-RAG.txt` — действующее задание: query expansion, параллельный FTS/BM25, RRF-слияние, fallback.
@@ -39,7 +39,7 @@
 - Пересобирай индекс после изменения содержимого `src/docs/` или настроек чанкинга в `src/config.py`.
 - Сохраняй песочницу от path traversal (`src/sandbox.py`, вызывается из `src/mcp/server.py`); никогда не ослабляй её.
 - MCP опционален: ассистент должен работать при сбое MCP; сохраняй этот fallback.
-- Юнит-тесты покрывают только чистые швы — гибридного поиска (слияние RRF `src/rag/merge.py`, FTS/BM25 `src/rag/fts.py`, парсинг ключевых слов `src/rag/expansion.py`) и песочницы документов (`src/sandbox.py`) — на рукотворных данных, без моков FAISS/Ollama/HTTP и без чтения артефактов: `cd src && uv run pytest`. Всё остальное (ингест, эмбеддинги, FAISS, MCP, ответы LLM) юнит-тестами не покрывается и проверяется минимальной реальной проверкой — пересборка индекса и один smoke-запрос, с указанием, что именно прошло; качество поиска — бенчмарком Recall@5/MRR (`src/rag/benchmark.py`).
+- Юнит-тесты покрывают только чистые швы — гибридного поиска (слияние RRF `src/rag/merge.py`, FTS/BM25 `src/rag/fts.py`, парсинг ключевых слов `src/rag/expansion.py`), песочницы документов (`src/sandbox.py`) и декодирования вопроса из stdin (`src/cli_input.py`) — на рукотворных данных, без моков FAISS/Ollama/HTTP и без чтения артефактов: `cd src && uv run pytest`. Всё остальное (ингест, эмбеддинги, FAISS, MCP, ответы LLM) юнит-тестами не покрывается и проверяется минимальной реальной проверкой — пересборка индекса и один smoke-запрос, с указанием, что именно прошло; качество поиска — бенчмарком Recall@5/MRR (`src/rag/benchmark.py`).
 - Проверки кода из корня: `uv run ruff check .`, `uv run ruff format --check .`, `uv run ty check src` (базлайн — 0 диагностик, ratchet). Хуки pre-commit установлены (`uv run pre-commit install`, один раз на клон). Детали — `src/COMMANDS.md`, «Development Checks».
 - Не выдумывай факты, пути и цифры бенчмарков. Целевая LLM крошечная (`qwen3:0.6b`): промпты для неё — минимальные и детерминированные (temperature 0–0.1 для извлечения данных).
 

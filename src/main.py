@@ -7,6 +7,7 @@ import io
 import sys
 
 from assistant import CompanyKBAssistant
+from cli_input import read_question
 
 
 def _force_utf8_stdio() -> None:
@@ -18,27 +19,6 @@ def _force_utf8_stdio() -> None:
     for stream in (sys.stdin, sys.stdout, sys.stderr):
         if isinstance(stream, io.TextIOWrapper):
             stream.reconfigure(encoding="utf-8", errors="replace")
-
-
-def read_question() -> str | None:
-    """Read one question line from stdin.
-
-    Returns the stripped text, an empty string if the line contained
-    undecodable bytes (U+FFFD markers; user is asked to retry),
-    or None on EOF (Ctrl+D).
-    """
-    try:
-        query = input("❓ Question: ").strip()
-    except UnicodeDecodeError:
-        # Only reachable when stdin is not a reconfigurable TextIOWrapper.
-        print("⚠️  Input could not be decoded as UTF-8, please retype the question")
-        return ""
-    except EOFError:
-        return None
-    if "\ufffd" in query:
-        print("⚠️  Input contained invalid UTF-8 bytes, please retype the question")
-        return ""
-    return query
 
 
 def main():
