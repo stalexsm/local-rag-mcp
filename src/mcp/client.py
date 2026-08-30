@@ -3,9 +3,10 @@ import subprocess
 import threading
 from pathlib import Path
 
+
 class MCPClient:
     """Client for communicating with MCP server."""
-    
+
     def __init__(self, cmd):
         self.proc = subprocess.Popen(
             cmd,
@@ -13,7 +14,7 @@ class MCPClient:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            cwd=Path(__file__).parent.parent
+            cwd=Path(__file__).parent.parent,
         )
 
         self.lock = threading.Lock()
@@ -41,8 +42,8 @@ class MCPClient:
             "params": {
                 "protocolVersion": "2024-11-05",
                 "capabilities": {},
-                "clientInfo": {"name": "company-kb-assistant", "version": "1.0"}
-            }
+                "clientInfo": {"name": "company-kb-assistant", "version": "1.0"},
+            },
         }
         self.next_id += 1
 
@@ -54,15 +55,12 @@ class MCPClient:
             "jsonrpc": "2.0",
             "id": self.next_id,
             "method": "tools/call",
-            "params": {
-                "name": name,
-                "arguments": arguments
-            }
+            "params": {"name": name, "arguments": arguments},
         }
         self.next_id += 1
 
         return self._send(payload)
-    
+
     def close(self):
         """Close the MCP connection."""
         if self.proc:

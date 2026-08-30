@@ -1,6 +1,7 @@
-from fastmcp import FastMCP
-from pathlib import Path
 import sys
+from pathlib import Path
+
+from fastmcp import FastMCP
 
 # Add parent directory to path for config import
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -17,8 +18,8 @@ def read_document(file_path: str) -> str:
         # Security: ensure path is within documents directory
         if not str(path.resolve()).startswith(str(Path(DOCUMENTS_DIR).resolve())):
             return f"Error: Access denied. File must be in {DOCUMENTS_DIR}"
-        
-        with open(path, "r", encoding="utf-8") as f:
+
+        with open(path, encoding="utf-8") as f:
             return f.read()
     except FileNotFoundError:
         return f"Error: File not found: {file_path}"
@@ -33,15 +34,15 @@ def list_documents() -> str:
         base_dir = Path(DOCUMENTS_DIR)
         if not base_dir.exists():
             return f"Error: Documents directory {DOCUMENTS_DIR} does not exist"
-        
+
         documents = []
         for path in base_dir.rglob("*"):
             if path.is_file() and path.suffix.lower() in {".txt", ".md", ".pdf", ".docx"}:
                 documents.append(str(path.relative_to(base_dir)))
-        
+
         if not documents:
             return "No documents found in the knowledge base."
-        
+
         return "\n".join(f"- {doc}" for doc in sorted(documents))
     except Exception as e:
         return f"Error listing documents: {str(e)}"
@@ -54,18 +55,18 @@ def search_documents(query: str) -> str:
         base_dir = Path(DOCUMENTS_DIR)
         if not base_dir.exists():
             return f"Error: Documents directory {DOCUMENTS_DIR} does not exist"
-        
+
         query_lower = query.lower()
         matches = []
-        
+
         for path in base_dir.rglob("*"):
             if path.is_file() and path.suffix.lower() in {".txt", ".md", ".pdf", ".docx"}:
                 if query_lower in path.name.lower():
                     matches.append(str(path.relative_to(base_dir)))
-        
+
         if not matches:
             return f"No documents found matching '{query}'"
-        
+
         return "\n".join(f"- {doc}" for doc in sorted(matches))
     except Exception as e:
         return f"Error searching documents: {str(e)}"

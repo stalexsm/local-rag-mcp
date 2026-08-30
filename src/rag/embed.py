@@ -1,7 +1,8 @@
-import numpy as np
-from sentence_transformers import SentenceTransformer
 import sys
 from pathlib import Path
+
+import numpy as np
+from sentence_transformers import SentenceTransformer
 
 # Add parent directory to path for config import
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -19,8 +20,6 @@ def embed_chunks(chunks):
 
 if __name__ == "__main__":
     # Test embedding
-    test_chunks = [
-        {"text": "This is a test chunk.", "source": "test.txt", "chunk_id": 0}
-    ]
+    test_chunks = [{"text": "This is a test chunk.", "source": "test.txt", "chunk_id": 0}]
     embeddings = embed_chunks(test_chunks)
     print(f"Embedding shape: {embeddings.shape}")

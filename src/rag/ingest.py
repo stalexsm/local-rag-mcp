@@ -1,12 +1,12 @@
-from pathlib import Path
-from pypdf import PdfReader
-from docx import Document as Docx
 import sys
+from pathlib import Path
+
+from docx import Document as Docx
+from pypdf import PdfReader
 
 # Add parent directory to path for config import
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from config import DOCUMENTS_DIR
-
 
 SUPPORTED_EXTENSIONS = {".txt", ".md", ".pdf", ".docx"}
 
@@ -40,10 +40,7 @@ def ingest_documents():
         if path.is_file() and path.suffix.lower() in SUPPORTED_EXTENSIONS:
             print(f"Loading: {path}")
             try:
-                documents.append({
-                    "path": str(path),
-                    "text": load_document(path)
-                })
+                documents.append({"path": str(path), "text": load_document(path)})
             except Exception as e:
                 print(f"Error loading {path}: {e}")
         # Unsupported files (e.g. .gitkeep) are skipped: rglob already

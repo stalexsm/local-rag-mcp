@@ -1,20 +1,14 @@
-import faiss
 import pickle
-import requests
 import sys
 from pathlib import Path
+
+import faiss
+import requests
 from sentence_transformers import SentenceTransformer
 
 # Add parent directory to path for config import
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from config import (
-    FAISS_INDEX_PATH,
-    CHUNKS_PATH,
-    EMBEDDING_MODEL,
-    OLLAMA_URL,
-    OLLAMA_MODEL,
-    TOP_K
-)
+from config import CHUNKS_PATH, EMBEDDING_MODEL, FAISS_INDEX_PATH, OLLAMA_MODEL, OLLAMA_URL, TOP_K
 
 model = SentenceTransformer(EMBEDDING_MODEL)
 
@@ -26,12 +20,12 @@ chunks = []
 def _ensure_index_exists():
     """Ensure FAISS index exists, build it if it doesn't."""
     global index, chunks
-    
+
     # Resolve paths relative to src directory
     src_dir = Path(__file__).parent.parent
     index_path = src_dir / FAISS_INDEX_PATH
     chunks_path = src_dir / CHUNKS_PATH
-    
+
     # Check if index exists
     if index_path.exists() and chunks_path.exists():
         try:
@@ -42,13 +36,14 @@ def _ensure_index_exists():
         except Exception as e:
             print(f"⚠️  Warning: Error loading existing index: {e}")
             print("Rebuilding index...")
-    
+
     # Index doesn't exist or failed to load, build it
     print("📦 Index not found. Building index from documents...")
     try:
         from rag.build_index import build_index
+
         build_index()
-        
+
         # Load the newly created index
         if index_path.exists() and chunks_path.exists():
             index = faiss.read_index(str(index_path))
@@ -59,12 +54,14 @@ def _ensure_index_exists():
         else:
             print("❌ Failed to build index. No documents found or error occurred.")
             from config import DOCUMENTS_DIR
+
             docs_path = src_dir / DOCUMENTS_DIR
             print(f"   Check that documents exist in: {docs_path}")
             return False
     except Exception as e:
         print(f"❌ Error building index: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -79,10 +76,10 @@ def retrieve(query: str):
     if index is None or len(chunks) == 0:
         if not _ensure_index_exists():
             return []
-    
+
     if index is None or len(chunks) == 0:
         return []
-    
+
     q_emb = model.encode([query])
     faiss.normalize_L2(q_emb)
 
@@ -104,10 +101,7 @@ def build_prompt(query, contexts):
 <assistant>
 """
 
-    context_text = "\n\n".join(
-        f"[Source: {c['source']}]\n{c['text']}"
-        for c in contexts
-    )
+    context_text = "\n\n".join(f"[Source: {c['source']}]\n{c['text']}" for c in contexts)
 
     return f"""
 <role>You are a helpful assistant that answers questions about company information.</role>
@@ -128,12 +122,7 @@ def build_prompt(query, contexts):
 def ask_llm(prompt):
     """Query Ollama LLM."""
     response = requests.post(
-        OLLAMA_URL,
-        json={
-            "model": OLLAMA_MODEL,
-            "prompt": prompt,
-            "stream": False
-        }
+        OLLAMA_URL, json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False}
     )
     return response.json()["response"]
 

@@ -1,10 +1,11 @@
-import tiktoken
 import sys
 from pathlib import Path
 
+import tiktoken
+
 # Add parent directory to path for config import
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from config import CHUNK_SIZE, CHUNK_OVERLAP
+from config import CHUNK_OVERLAP, CHUNK_SIZE
 
 encoder = tiktoken.get_encoding("cl100k_base")
 
@@ -16,7 +17,7 @@ def chunk_text(text: str):
 
     step = CHUNK_SIZE - CHUNK_OVERLAP
     for i in range(0, len(tokens), step):
-        chunk_tokens = tokens[i:i + CHUNK_SIZE]
+        chunk_tokens = tokens[i : i + CHUNK_SIZE]
         chunks.append(encoder.decode(chunk_tokens))
 
     return chunks
@@ -29,11 +30,7 @@ def chunk_documents(documents):
     for doc in documents:
         chunks = chunk_text(doc["text"])
         for idx, chunk in enumerate(chunks):
-            all_chunks.append({
-                "text": chunk,
-                "source": doc["path"],
-                "chunk_id": idx
-            })
+            all_chunks.append({"text": chunk, "source": doc["path"], "chunk_id": idx})
 
     return all_chunks
 
