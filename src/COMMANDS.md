@@ -40,7 +40,8 @@ Put your documents (`.txt`, `.md`, `.pdf`, `.docx`) into `src/docs/`
 
 ### 3. Update configuration (optional)
 Edit `src/config.py` if needed:
-- Set `DOCUMENTS_DIR` to your documents path (default: `./docs`, relative to `src/`)
+- Set `DOCUMENTS_DIR` to your documents path (default: `./docs`, resolved
+  against `src/`; absolute paths are used as-is)
 - Change `OLLAMA_MODEL` if using a different model (default: `qwen3:0.6b`)
 - Adjust `CHUNK_SIZE`, `CHUNK_OVERLAP`, or `TOP_K` as needed
 
@@ -60,8 +61,8 @@ uv run python -m rag.build_index
 ```
 
 `uv run` finds the manifest in the repository root even when launched from
-`src/`; Python itself must run from `src/` because the relative paths in
-`config.py` are resolved from there.
+`src/`; Python itself must run from `src/` because module imports resolve
+from there (config paths in `config.py` are anchored to `src/` themselves).
 
 This will:
 - Load all documents from the `src/docs/` directory

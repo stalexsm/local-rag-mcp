@@ -55,8 +55,7 @@ def _ensure_index_exists():
             print("❌ Failed to build index. No documents found or error occurred.")
             from config import DOCUMENTS_DIR
 
-            docs_path = src_dir / DOCUMENTS_DIR
-            print(f"   Check that documents exist in: {docs_path}")
+            print(f"   Check that documents exist in: {DOCUMENTS_DIR}")
             return False
     except Exception as e:
         print(f"❌ Error building index: {e}")

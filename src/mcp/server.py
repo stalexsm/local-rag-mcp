@@ -16,8 +16,10 @@ def read_document(file_path: str) -> str:
     """Reads a document from the knowledge base."""
     try:
         path = Path(file_path)
-        # Security: ensure path is within documents directory
-        if not str(path.resolve()).startswith(str(Path(DOCUMENTS_DIR).resolve())):
+        # Security: ensure path is within documents directory. Prefix string
+        # comparison would let sibling directories through ("…/src/docs-vault"
+        # starts with "…/src/docs"), so compare resolved paths structurally.
+        if not path.resolve().is_relative_to(Path(DOCUMENTS_DIR).resolve()):
             return f"Error: Access denied. File must be in {DOCUMENTS_DIR}"
 
         with open(path, encoding="utf-8") as f:

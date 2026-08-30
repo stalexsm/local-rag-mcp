@@ -1,7 +1,22 @@
 # Configuration for Company Knowledge Base Assistant
 
+from pathlib import Path
+
+# Directory of this file: src/. Config paths below are anchored here so the
+# app resolves them identically no matter which working directory it is
+# launched from (the MCP server may be started from anywhere).
+SRC_DIR = Path(__file__).resolve().parent
+
+
+def resolve_path(value: str | Path) -> str:
+    """Resolve a config path against src/ unless it is already absolute."""
+    value = Path(value)
+    return str(value if value.is_absolute() else SRC_DIR / value)
+
+
 # Document directory - update this to point to your company documentation
-DOCUMENTS_DIR = "./docs"
+# (a relative value is resolved against src/, the directory of this file)
+DOCUMENTS_DIR = resolve_path("./docs")
 
 # Chunking configuration
 CHUNK_SIZE = 700
