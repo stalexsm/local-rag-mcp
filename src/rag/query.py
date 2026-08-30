@@ -17,9 +17,11 @@ from config import (
     HYBRID_SEARCH,
     OLLAMA_MODEL,
     OLLAMA_URL,
+    QUERY_EXPANSION,
     RRF_K,
     TOP_K,
 )
+from rag.expansion import expand_query
 from rag.fts import build_fts_index, fts_search
 from rag.merge import rrf_merge
 
@@ -109,13 +111,16 @@ def _fts_positions(query: str) -> list[int]:
     return fts_search(bm25_index, query, CANDIDATE_POOL_SIZE)
 
 
-def retrieve(query: str):
+def retrieve(query: str, verbose: bool = False):
     """Retrieve relevant chunks for a query.
 
-    Hybrid mode (default): vector and FTS retrievers run in parallel
-    (ADR-0003), their candidate pools fuse via RRF, and the final TOP_K is
-    taken from the merged ranking. A retriever failure degrades to the
-    other one; a query never fails because of search.
+    Hybrid mode (default): query expansion first, then vector and FTS
+    retrievers run in parallel (ADR-0003), their candidate pools fuse via
+    RRF, and the final TOP_K is taken from the merged ranking. Keywords
+    feed the FTS retriever only; the vector retriever keeps the original
+    question (keywords blur its embedding). A retriever failure degrades
+    to the other one, an expansion failure to the bare question; a query
+    never fails because of search.
     """
     # Ensure index exists before retrieving (may build it as a side effect).
     if index is None or len(chunks) == 0:
@@ -125,13 +130,32 @@ def retrieve(query: str):
         return []
 
     if not HYBRID_SEARCH:
-        # Kill-switch: legacy vector-only top-TOP_K behavior.
+        # Kill-switch: legacy vector-only top-TOP_K behavior. Expansion is
+        # skipped too — the vector retriever ignores keywords anyway.
         return [chunks[i] for i in _vector_positions(query, TOP_K)]
+
+    # Query Expansion: keywords for the FTS retriever only. Any expansion
+    # failure yields [] — the FTS query stays the bare question.
+    if QUERY_EXPANSION:
+        keywords = expand_query(query)
+        if verbose:
+            if keywords:
+                print(f"🔑 Extracted keywords: {', '.join(keywords)}")
+            else:
+                print("🔑 No keywords extracted; FTS searches the question only")
+    else:
+        keywords = []
+        if verbose:
+            print("🔑 Query expansion disabled; FTS searches the question only")
+
+    fts_query = " ".join([query, *keywords])
+    if verbose:
+        print(f"🔎 FTS searches: {fts_query!r}")
 
     with ThreadPoolExecutor(max_workers=2) as executor:
         futures = [
             executor.submit(_vector_positions, query, CANDIDATE_POOL_SIZE),
-            executor.submit(_fts_positions, query),
+            executor.submit(_fts_positions, fts_query),
         ]
 
     rankings: list[list[int]] = []

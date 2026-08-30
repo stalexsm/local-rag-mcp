@@ -43,3 +43,14 @@ HYBRID_SEARCH = True
 CANDIDATE_POOL_SIZE = 20
 # RRF constant: larger k flattens rank differences between retrievers
 RRF_K = 60
+
+# Query Expansion: the LLM extracts search keywords from the question before
+# hybrid search. Kill-switch: False keeps FTS on the question only (behavior
+# of the previous milestone). Keywords feed the FTS retriever only; the
+# vector retriever always searches the original question.
+QUERY_EXPANSION = True
+# Seconds before the expansion request is abandoned; a timeout, like any
+# other expansion failure, degrades to searching by the question alone.
+EXPANSION_TIMEOUT = 5
+# Maximum keywords extracted from one question
+KEYWORD_LIMIT = 8

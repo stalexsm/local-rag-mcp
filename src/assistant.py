@@ -127,8 +127,8 @@ Your JSON response:"""
 
     def query(self, user_query: str, verbose=False):
         """Answer a question using RAG and optionally MCP tools."""
-        # Step 1: Retrieve from RAG
-        contexts = retrieve(user_query)
+        # Step 1: Retrieve from RAG (verbose shows expansion + FTS query)
+        contexts = retrieve(user_query, verbose=verbose)
 
         if verbose:
             print(f"📚 Retrieved {len(contexts)} relevant chunks from knowledge base")
