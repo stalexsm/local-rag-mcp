@@ -35,12 +35,15 @@ _LABEL_RE = re.compile(r"^\s*\w[\w ]{0,29}:\s*")
 def parse_keywords(raw: str | None, limit: int = KEYWORD_LIMIT) -> list[str]:
     """Parse the raw LLM answer into keywords (pure fallback policy).
 
-    Split on commas, trim whitespace, drop empties, deduplicate preserving
-    the first occurrence, cap at `limit`. An empty or missing raw answer
-    yields [] — the no-expansion fallback.
+    A leading short label ("keywords:") is stripped first — the tiny model
+    sometimes prefixes the answer line. Then split on commas, trim
+    whitespace, drop empties, deduplicate preserving the first occurrence,
+    cap at `limit`. An empty or missing raw answer yields [] — the
+    no-expansion fallback.
     """
     if not raw:
         return []
+    raw = _LABEL_RE.sub("", raw, count=1)
     keywords: list[str] = []
     for part in raw.split(","):
         word = part.strip()
@@ -71,7 +74,7 @@ def expand_query(question: str) -> list[str]:
         )
         response.raise_for_status()
         raw = response.json().get("response") or ""
-        return parse_keywords(_LABEL_RE.sub("", raw, count=1))
+        return parse_keywords(raw)
     # Intentionally broad: any expansion failure must degrade to an empty
     # keyword list, not break the search.
     except Exception as e:  # noqa: BLE001

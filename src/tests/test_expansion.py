@@ -26,6 +26,12 @@ def test_empty_or_blank_answer_yields_empty_list() -> None:
     assert parse_keywords("   ") == []
 
 
+def test_label_prefix_is_stripped() -> None:
+    # The tiny model sometimes prefixes the answer line with a label.
+    assert parse_keywords("keywords: отпуск, больничный") == ["отпуск", "больничный"]
+    assert parse_keywords("search keywords: sprint, planning") == ["sprint", "planning"]
+
+
 def test_duplicates_keep_first_occurrence() -> None:
     assert parse_keywords("отпуск, отпуск, больничный, отпуск") == ["отпуск", "больничный"]
 

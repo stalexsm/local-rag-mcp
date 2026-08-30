@@ -94,6 +94,11 @@ def _ensure_index_exists():
 _ensure_index_exists()
 
 
+def _positions_to_chunks(positions: list[int]) -> list[dict]:
+    """Map chunk positions from a ranking onto the loaded chunk list."""
+    return [chunks[pos] for pos in positions]
+
+
 def _vector_positions(query: str, n: int) -> list[int]:
     """Vector retriever: FAISS top-n candidates as positional chunk indices."""
     if index is None:
@@ -132,7 +137,7 @@ def retrieve(query: str, verbose: bool = False):
     if not HYBRID_SEARCH:
         # Kill-switch: legacy vector-only top-TOP_K behavior. Expansion is
         # skipped too — the vector retriever ignores keywords anyway.
-        return [chunks[i] for i in _vector_positions(query, TOP_K)]
+        return _positions_to_chunks(_vector_positions(query, TOP_K))
 
     # Query Expansion: keywords for the FTS retriever only. Any expansion
     # failure yields [] — the FTS query stays the bare question.
@@ -163,11 +168,11 @@ def retrieve(query: str, verbose: bool = False):
         try:
             rankings.append(future.result())
         except Exception as e:
-            # Degradation: the failed retriever drops out of the merge.
+            # Fallback: the failed retriever drops out of the merge.
             print(f"⚠️  Retriever failed ({type(e).__name__}: {e}); merging the survivor")
 
     merged_positions = rrf_merge(rankings, RRF_K)[:TOP_K]
-    return [chunks[pos] for pos in merged_positions]
+    return _positions_to_chunks(merged_positions)
 
 
 def build_prompt(query, contexts):
