@@ -35,8 +35,10 @@ class BenchmarkCase:
     relevant: tuple[str, ...]
 
 
-# Seven lexical cases (exact role, process and document names) and seven
-# semantic paraphrases (same documents, no exact names in the query).
+# Seven lexical cases (exact role, process and document names) and eight
+# semantic paraphrases (same documents). The paraphrases avoid the target
+# documents' names and key terms, but individual common words may still
+# match the corpus (e.g. "спринта", "git") — that is real behavior.
 BENCHMARK_CASES: list[BenchmarkCase] = [
     # Lexical: exact process names
     BenchmarkCase("Sprint Planning", ("Процессы/Sprint Planning.md",)),
@@ -160,13 +162,13 @@ def _retrieve_hybrid(question: str) -> list:
 MODES: list[tuple[str, Callable[[str], list]]] = [
     ("Векторный (FAISS)", _retrieve_vector),
     ("FTS (BM25)", _retrieve_fts),
-    ("Гибрид (RRF + расширение запроса)", _retrieve_hybrid),
+    ("Гибрид (RRF + Query Expansion)", _retrieve_hybrid),
 ]
 
 
-def format_table(rows: list[tuple[str, float, float]]) -> str:
+def format_table(rows: list[tuple[str, float, float]], recall_label: str) -> str:
     """Render mode x metric averages as a markdown table."""
-    lines = ["| Режим | Recall@5 | MRR |", "| --- | --- | --- |"]
+    lines = [f"| Режим | {recall_label} | MRR |", "| --- | --- | --- |"]
     lines.extend(f"| {label} | {recall:.2f} | {rr:.2f} |" for label, recall, rr in rows)
     return "\n".join(lines)
 
@@ -196,4 +198,4 @@ def run_benchmark() -> None:
         rows.append((label, recall_sum / total, mrr_sum / total))
 
     print("\nРезультаты (среднее по запросам, релевантность на уровне документа):\n")
-    print(format_table(rows))
+    print(format_table(rows, recall_label=f"Recall@{TOP_K}"))
