@@ -6,6 +6,7 @@ from fastmcp import FastMCP
 # Add parent directory to path for config import
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from config import DOCUMENTS_DIR
+from discovery import iter_supported_files
 
 mcp = FastMCP("doc-tools", version="1.0.0")
 
@@ -37,15 +38,14 @@ def list_documents() -> str:
         if not base_dir.exists():
             return f"Error: Documents directory {DOCUMENTS_DIR} does not exist"
 
-        documents = []
-        for path in base_dir.rglob("*"):
-            if path.is_file() and path.suffix.lower() in {".txt", ".md", ".pdf", ".docx"}:
-                documents.append(str(path.relative_to(base_dir)))
+        documents = sorted(
+            str(path.relative_to(base_dir)) for path in iter_supported_files(base_dir)
+        )
 
         if not documents:
             return "No documents found in the knowledge base."
 
-        return "\n".join(f"- {doc}" for doc in sorted(documents))
+        return "\n".join(f"- {doc}" for doc in documents)
     # Intentionally broad: see read_document — tools must not crash the server.
     except Exception as e:  # noqa: BLE001
         return f"Error listing documents: {str(e)}"
@@ -60,20 +60,16 @@ def search_documents(query: str) -> str:
             return f"Error: Documents directory {DOCUMENTS_DIR} does not exist"
 
         query_lower = query.lower()
-        matches = []
-
-        for path in base_dir.rglob("*"):
-            if (
-                path.is_file()
-                and path.suffix.lower() in {".txt", ".md", ".pdf", ".docx"}
-                and query_lower in path.name.lower()
-            ):
-                matches.append(str(path.relative_to(base_dir)))
+        matches = sorted(
+            str(path.relative_to(base_dir))
+            for path in iter_supported_files(base_dir)
+            if query_lower in path.name.lower()
+        )
 
         if not matches:
             return f"No documents found matching '{query}'"
 
-        return "\n".join(f"- {doc}" for doc in sorted(matches))
+        return "\n".join(f"- {doc}" for doc in matches)
     # Intentionally broad: see read_document — tools must not crash the server.
     except Exception as e:  # noqa: BLE001
         return f"Error searching documents: {str(e)}"

@@ -12,6 +12,7 @@
 
 - `src/` — весь код; запускай Python из этой директории (импорты и относительные пути от неё зависят).
 - `src/config.py` — единственный источник настроек (модели, чанкинг, пути, TOP_K).
+- `src/discovery.py` — общий фильтр документов (rglob + поддерживаемые расширения, без тяжёлых импортов); используется `rag/ingest.py` и `mcp/server.py`.
 - `src/rag/` — пайплайн: ingest → chunk → embed → build_index → query.
 - `src/mcp/` — инструменты FastMCP (`server.py`: read/list/search) и `client.py`; `src/assistant.py`, `src/main.py` — оркестратор и CLI.
 - `src/COMMANDS.md` — установка (`uv sync`), запуск, проверки качества, траблшутинг; корневой `README.md` — обзор архитектуры; `docs/adr/` — архитектурные решения.

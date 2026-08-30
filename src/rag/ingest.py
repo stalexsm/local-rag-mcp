@@ -7,8 +7,7 @@ from pypdf import PdfReader
 # Add parent directory to path for config import
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from config import DOCUMENTS_DIR
-
-SUPPORTED_EXTENSIONS = {".txt", ".md", ".pdf", ".docx"}
+from discovery import iter_supported_files
 
 
 def load_document(path: Path) -> str:
@@ -36,15 +35,13 @@ def ingest_documents():
         print(f"Warning: Documents directory {DOCUMENTS_DIR} does not exist")
         return documents
 
-    for path in base_dir.rglob("*"):
-        if path.is_file() and path.suffix.lower() in SUPPORTED_EXTENSIONS:
-            print(f"Loading: {path}")
-            try:
-                documents.append({"path": str(path), "text": load_document(path)})
-            except Exception as e:
-                print(f"Error loading {path}: {e}")
-        # Unsupported files (e.g. .gitkeep) are skipped: rglob already
-        # walks subdirectories, so no recursion is needed.
+    # Unsupported files (e.g. .gitkeep) are skipped by the shared filter.
+    for path in iter_supported_files(base_dir):
+        print(f"Loading: {path}")
+        try:
+            documents.append({"path": str(path), "text": load_document(path)})
+        except Exception as e:
+            print(f"Error loading {path}: {e}")
 
     return documents
 
