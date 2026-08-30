@@ -27,6 +27,21 @@ dev = [
     "ty>=0.0.1",
 ]
 
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E4",  # pycodestyle errors (ruff default)
+    "E7",
+    "E9",
+    "F",   # pyflakes (ruff default)
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+]
+
 [tool.uv]
 # Non-package mode: uv manages the environment and the lock only;
 # the code is not installed as a package (convention: run from src/).
