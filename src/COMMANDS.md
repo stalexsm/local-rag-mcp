@@ -140,11 +140,11 @@ When you add new documents or update existing ones:
 
 ## Development Checks
 
-Unit tests cover only the pure seams of hybrid search — the RRF merge
-(`src/rag/merge.py`), the in-memory FTS (`src/rag/fts.py`) and keyword
-parsing (`src/rag/expansion.py`). They run on hand-made chunks and answer
-strings: no mocks of FAISS/Ollama/HTTP, no reading generated artifacts
-(`index.faiss`, `chunks.pkl`):
+Unit tests cover only the pure seams — hybrid search (the RRF merge
+`src/rag/merge.py`, the in-memory FTS `src/rag/fts.py`, keyword parsing
+`src/rag/expansion.py`) and the document sandbox (`src/sandbox.py`). They
+run on hand-made chunks and answer strings: no mocks of FAISS/Ollama/HTTP,
+no reading generated artifacts (`index.faiss`, `chunks.pkl`):
 
 ```bash
 cd src
