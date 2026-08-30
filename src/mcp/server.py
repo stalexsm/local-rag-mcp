@@ -23,7 +23,9 @@ def read_document(file_path: str) -> str:
             return f.read()
     except FileNotFoundError:
         return f"Error: File not found: {file_path}"
-    except Exception as e:
+    # Intentionally broad: a tool must return an error string instead of
+    # crashing the MCP server process (client falls back to RAG on failure).
+    except Exception as e:  # noqa: BLE001
         return f"Error reading file: {str(e)}"
 
 
@@ -44,7 +46,8 @@ def list_documents() -> str:
             return "No documents found in the knowledge base."
 
         return "\n".join(f"- {doc}" for doc in sorted(documents))
-    except Exception as e:
+    # Intentionally broad: see read_document — tools must not crash the server.
+    except Exception as e:  # noqa: BLE001
         return f"Error listing documents: {str(e)}"
 
 
@@ -60,15 +63,19 @@ def search_documents(query: str) -> str:
         matches = []
 
         for path in base_dir.rglob("*"):
-            if path.is_file() and path.suffix.lower() in {".txt", ".md", ".pdf", ".docx"}:
-                if query_lower in path.name.lower():
-                    matches.append(str(path.relative_to(base_dir)))
+            if (
+                path.is_file()
+                and path.suffix.lower() in {".txt", ".md", ".pdf", ".docx"}
+                and query_lower in path.name.lower()
+            ):
+                matches.append(str(path.relative_to(base_dir)))
 
         if not matches:
             return f"No documents found matching '{query}'"
 
         return "\n".join(f"- {doc}" for doc in sorted(matches))
-    except Exception as e:
+    # Intentionally broad: see read_document — tools must not crash the server.
+    except Exception as e:  # noqa: BLE001
         return f"Error searching documents: {str(e)}"
 
 

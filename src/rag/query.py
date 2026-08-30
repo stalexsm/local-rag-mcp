@@ -72,10 +72,9 @@ _ensure_index_exists()
 
 def retrieve(query: str):
     """Retrieve relevant chunks for a query."""
-    # Ensure index exists before retrieving
+    # Ensure index exists before retrieving (may build it as a side effect).
     if index is None or len(chunks) == 0:
-        if not _ensure_index_exists():
-            return []
+        _ensure_index_exists()
 
     if index is None or len(chunks) == 0:
         return []

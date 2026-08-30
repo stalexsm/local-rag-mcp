@@ -24,14 +24,13 @@ class CompanyKBAssistant:
     def _init_mcp(self):
         """Initialize MCP client."""
         try:
-            import sys
-            from pathlib import Path
-
             python_cmd = sys.executable
             # Get absolute path to MCP server
             mcp_path = Path(__file__).parent / "mcp" / "server.py"
             self.mcp = MCPClient([python_cmd, str(mcp_path)])
-        except Exception as e:
+        # Intentionally broad: MCP is optional, the assistant must keep
+        # working when the MCP server cannot be started.
+        except Exception as e:  # noqa: BLE001
             print(f"Warning: Could not initialize MCP client: {e}")
             self.mcp = None
 
@@ -108,8 +107,9 @@ Your JSON response:"""
 
             return None, None
 
-        except Exception:
-            # If LLM decision fails, don't use MCP
+        # Intentionally broad: if the MCP-usage decision fails, fall back
+        # to plain RAG instead of failing the whole query.
+        except Exception:  # noqa: BLE001
             return None, None
 
     def _call_mcp_tool(self, tool_name: str, tool_args: dict):
@@ -120,7 +120,9 @@ Your JSON response:"""
         try:
             result = self.mcp.call_tool(tool_name, tool_args)
             return result.get("result", "")
-        except Exception as e:
+        # Intentionally broad: a failing tool call must degrade to an error
+        # string, not crash the assistant (MCP fallback semantics).
+        except Exception as e:  # noqa: BLE001
             return f"Error calling MCP tool {tool_name}: {str(e)}"
 
     def query(self, user_query: str, verbose=False):
