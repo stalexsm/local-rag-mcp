@@ -3,13 +3,47 @@
 Company Knowledge Base Assistant - Main Entry Point
 """
 
+import io
 import sys
 
 from assistant import CompanyKBAssistant
 
 
+def _force_utf8_stdio() -> None:
+    """Force UTF-8 on stdio so Cyrillic input and emoji output survive any locale.
+
+    Undecodable bytes become U+FFFD instead of raising UnicodeDecodeError,
+    and non-encodable text is replaced instead of raising UnicodeEncodeError.
+    """
+    for stream in (sys.stdin, sys.stdout, sys.stderr):
+        if isinstance(stream, io.TextIOWrapper):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
+def read_question() -> str | None:
+    """Read one question line from stdin.
+
+    Returns the stripped text, an empty string if the line contained
+    undecodable bytes (U+FFFD markers; user is asked to retry),
+    or None on EOF (Ctrl+D).
+    """
+    try:
+        query = input("❓ Question: ").strip()
+    except UnicodeDecodeError:
+        # Only reachable when stdin is not a reconfigurable TextIOWrapper.
+        print("⚠️  Input could not be decoded as UTF-8, please retype the question")
+        return ""
+    except EOFError:
+        return None
+    if "\ufffd" in query:
+        print("⚠️  Input contained invalid UTF-8 bytes, please retype the question")
+        return ""
+    return query
+
+
 def main():
     """Main entry point for the assistant."""
+    _force_utf8_stdio()
     if len(sys.argv) > 1 and sys.argv[1] == "build-index":
         # Build index mode
         from rag.build_index import build_index
@@ -35,7 +69,11 @@ def main():
 
     try:
         while True:
-            query = input("❓ Question: ").strip()
+            query = read_question()
+
+            if query is None:
+                print("\n👋 Goodbye!")
+                break
 
             if not query:
                 continue
