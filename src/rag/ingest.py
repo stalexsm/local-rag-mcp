@@ -21,7 +21,7 @@ def load_document(path: Path) -> str:
         return "\n".join(page.extract_text() or "" for page in reader.pages)
 
     if path.suffix == ".docx":
-        doc = Docx(path)
+        doc = Docx(str(path))
         return "\n".join(p.text for p in doc.paragraphs)
 
     raise ValueError(f"Unsupported format: {path}")

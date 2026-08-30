@@ -42,6 +42,13 @@ select = [
     "SIM", # flake8-simplify
 ]
 
+[tool.ty]
+# Type checking runs in ratchet mode.
+# Baseline (2026-08-30, ty pinned by uv.lock): `uv run ty check src`
+# passes with 0 diagnostics.
+# Policy (fix or narrowly scoped justified ignores; no global rule
+# disables) is documented in src/COMMANDS.md, "Development Checks".
+
 [tool.uv]
 # Non-package mode: uv manages the environment and the lock only;
 # the code is not installed as a package (convention: run from src/).

@@ -123,6 +123,29 @@ When you add new documents or update existing ones:
 - Verify virtual environment is activated
 - Check that all dependencies are installed: `pip install -r requirements.txt`
 
+## Development Checks
+
+Type checking runs in ratchet mode: the baseline is "0 diagnostics", so any
+new output from `ty` is a real regression, not known noise. The initial
+baseline was reached with cheap fixes only (no ignores were needed). New
+diagnostics must be fixed (prefer signature annotations) or muted with a
+narrowly scoped, justified ignore — no global rule disables.
+
+```bash
+# From the repository root
+uv run ty check src
+# Expected: "All checks passed!" (exit code 0)
+# Baseline recorded: 2026-08-30, ty version pinned in uv.lock
+```
+
+Lint and format (also part of the baseline):
+
+```bash
+uv run ruff check .
+uv run ruff format --check .
+# Expected: no findings (exit code 0)
+```
+
 ## Quick Start Summary
 
 ```bash

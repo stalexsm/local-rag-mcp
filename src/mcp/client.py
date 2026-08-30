@@ -23,6 +23,9 @@ class MCPClient:
 
     def _send(self, payload):
         """Send JSON-RPC message and receive response."""
+        # The server is started with stdin/stdout as PIPE, so the streams are
+        # never None; the asserts narrow the Optional types for type checkers.
+        assert self.proc.stdin is not None and self.proc.stdout is not None
         with self.lock:
             data = json.dumps(payload)
             self.proc.stdin.write(data + "\n")
