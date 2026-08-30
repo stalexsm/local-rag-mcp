@@ -4,69 +4,67 @@ Run these commands in order to set up and use the Company Knowledge Base Assista
 
 ## Prerequisites
 
-1. **Install Python 3.10+** (if not already installed)
+1. **Install uv** — it manages Python, the virtual environment and
+   dependencies (nothing is installed manually):
+   ```bash
+   # macOS / Linux
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   # or: brew install uv
+   ```
 2. **Install Ollama** and pull the model:
    ```bash
    # macOS
    brew install ollama
-   
    # Or download from https://ollama.ai
-   
-   # Pull the model
-   ollama pull llama3
+
+   # Pull the model used by config.py
+   ollama pull qwen3:0.6b
    ```
 
 ## Setup Steps
 
-### 1. Navigate to the src directory
+### 1. Sync the environment (from the repository root)
 ```bash
-cd src
+uv sync
 ```
+One command replaces the whole old routine: downloads Python 3.12 if
+missing (pinned in `.python-version`), creates `.venv/` and installs the
+exact versions from `uv.lock` — runtime dependencies plus the dev group
+(ruff, ty, pre-commit). There is no virtual environment to activate:
+`uv run` picks up the project environment automatically.
 
-### 2. Create a virtual environment (recommended)
-```bash
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
+### 2. Add company documentation
+Put your documents (`.txt`, `.md`, `.pdf`, `.docx`) into `src/docs/`
+(subfolders are allowed). The directory is tracked as an empty placeholder
+(`src/docs/.gitkeep`) — the documents themselves are local data.
 
-### 3. Install dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Create documents directory
-```bash
-mkdir -p docs
-```
-
-### 5. Add company documentation
-Add your company documentation files (`.txt`, `.md`, `.pdf`, `.docx`) to the `docs/` directory:
-```bash
-# Example: Copy some sample documents
-# cp /path/to/company/docs/* docs/
-```
-
-### 6. Update configuration (optional)
-Edit `config.py` if needed:
-- Set `DOCUMENTS_DIR` to your documents path (default: `./docs`)
-- Change `OLLAMA_MODEL` if using a different model
+### 3. Update configuration (optional)
+Edit `src/config.py` if needed:
+- Set `DOCUMENTS_DIR` to your documents path (default: `./docs`, relative to `src/`)
+- Change `OLLAMA_MODEL` if using a different model (default: `qwen3:0.6b`)
 - Adjust `CHUNK_SIZE`, `CHUNK_OVERLAP`, or `TOP_K` as needed
 
-### 7. Build the FAISS index (Optional)
+### 4. Build the FAISS index (Optional)
 
 The index will be built automatically on first use. To manually build it:
 
 ```bash
-python main.py build-index
+cd src
+uv run python main.py build-index
 ```
 
 Or directly:
 ```bash
-python -m rag.build_index
+cd src
+uv run python -m rag.build_index
 ```
 
+`uv run` finds the manifest in the repository root even when launched from
+`src/`; Python itself must run from `src/` because the relative paths in
+`config.py` are resolved from there.
+
 This will:
-- Load all documents from the `docs/` directory
+- Load all documents from the `src/docs/` directory
 - Chunk them into smaller pieces
 - Generate embeddings
 - Build the FAISS index
@@ -78,7 +76,8 @@ This will:
 
 Run the assistant interactively:
 ```bash
-python main.py
+cd src
+uv run python main.py
 ```
 
 Then ask questions like:
@@ -92,36 +91,38 @@ Type `exit` or `quit` to stop.
 
 When you add new documents or update existing ones:
 
-1. Add/update files in the `docs/` directory
+1. Add/update files in `src/docs/`
 2. Rebuild the index:
    ```bash
-   python main.py build-index
+   cd src
+   uv run python main.py build-index
    ```
 
 ## Troubleshooting
 
 ### "Index not found" error
 - The index will be built automatically on first use
-- Or manually run `python main.py build-index`
+- Or manually run `uv run python main.py build-index`
 
 ### "No documents found"
-- Check that `docs/` directory exists and contains files
-- Verify `DOCUMENTS_DIR` in `config.py` is correct
+- Check that `src/docs/` contains files
+- Verify `DOCUMENTS_DIR` in `src/config.py` is correct
 - Ensure files have supported extensions (`.txt`, `.md`, `.pdf`, `.docx`)
 
 ### Ollama connection errors
 - Make sure Ollama is running: `ollama list`
-- Verify the model is installed: `ollama pull llama3`
-- Check `OLLAMA_URL` in `config.py` (default: `http://localhost:11434/api/generate`)
+- Verify the model is installed: `ollama pull qwen3:0.6b`
+- Check `OLLAMA_URL` in `src/config.py` (default: `http://localhost:11434/api/generate`)
 
 ### MCP client errors
 - MCP tools are optional - the assistant will work without them
 - If MCP fails, RAG will still function
 
 ### Import errors
-- Make sure you're in the `src/` directory
-- Verify virtual environment is activated
-- Check that all dependencies are installed: `pip install -r requirements.txt`
+- Make sure you run Python from the `src/` directory: `cd src && uv run python main.py`
+- Do not create or activate environments manually — `uv run` resolves the
+  project environment from the root manifest
+- If the environment looks broken, re-run `uv sync` from the repository root
 
 ## Development Checks
 
@@ -164,19 +165,17 @@ so the hook and the local commands above agree.
 ## Quick Start Summary
 
 ```bash
-# 1. Setup
-cd src
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+# 1. One-time setup (from the repository root)
+uv sync
+ollama pull qwen3:0.6b
 
 # 2. Prepare documents
-mkdir -p docs
-# Add your company documentation files to docs/
+# Add your company documentation files to src/docs/
 
 # 3. Build index
-python main.py build-index
+cd src
+uv run python main.py build-index
 
 # 4. Run
-python main.py
+uv run python main.py
 ```

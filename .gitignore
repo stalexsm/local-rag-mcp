@@ -241,3 +241,8 @@ python-rag/
 
 /**.md
 /**.txt
+
+# Canonical repo documents must be tracked despite the blanket rules above
+!AGENTS.md
+!Task-RAG.txt
+!CONTEXT.md

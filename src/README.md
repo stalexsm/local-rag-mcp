@@ -12,8 +12,12 @@ An intelligent Q&A system that answers questions about company documentation usi
 
 ### 1. Install Dependencies
 
+Install [uv](https://docs.astral.sh/uv/), then sync the environment from the
+repository root (downloads Python 3.12 if missing, creates `.venv/`, installs
+exact versions from `uv.lock`):
+
 ```bash
-pip install -r requirements.txt
+uv sync
 ```
 
 ### 2. Set Up Documents
@@ -27,9 +31,9 @@ mkdir docs
 
 ### 3. Configure
 
-Edit `config.py` to set:
+Edit `src/config.py` to set:
 - `DOCUMENTS_DIR`: Path to your documentation directory
-- `OLLAMA_MODEL`: Local LLM model to use (default: "llama3")
+- `OLLAMA_MODEL`: Local LLM model to use (default: "qwen3:0.6b")
 - Other settings as needed
 
 ### 4. Build Index (Optional)
@@ -37,13 +41,15 @@ Edit `config.py` to set:
 The index will be built automatically on first use. To manually build it:
 
 ```bash
-python main.py build-index
+cd src
+uv run python main.py build-index
 ```
 
 Or directly:
 
 ```bash
-python -m rag.build_index
+cd src
+uv run python -m rag.build_index
 ```
 
 ## Usage
@@ -53,7 +59,8 @@ python -m rag.build_index
 Run the interactive assistant:
 
 ```bash
-python main.py
+cd src
+uv run python main.py
 ```
 
 Then ask questions about your company documentation!
@@ -74,7 +81,6 @@ src/
 ├── mcp/                   # MCP components
 │   ├── server.py         # MCP server with tools
 │   └── client.py         # MCP client
-├── requirements.txt      # Dependencies
 └── README.md             # This file
 ```
 
@@ -98,11 +104,11 @@ The MCP server provides:
 
 ## Troubleshooting
 
-**Index not found**: Run `python main.py build-index` first
+**Index not found**: Run `uv run python main.py build-index` from `src/` first
 
 **Ollama not responding**: Make sure Ollama is running and the model is installed:
 ```bash
-ollama pull llama3
+ollama pull qwen3:0.6b
 ```
 
 **No documents found**: Check that `DOCUMENTS_DIR` in `config.py` points to your documents

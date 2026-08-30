@@ -96,7 +96,7 @@ search_documents(query)
 # 💻 Tech Stack
 
 ```
-Language:      Python 3.10+
+Language:      Python 3.12 (pinned, managed by uv)
 Vector DB:     FAISS
 Embeddings:    SentenceTransformers
 LLM:           Ollama (local)
@@ -125,7 +125,7 @@ src/
 # 🚀 Index Building (Setup)
 
 ```
-$ python main.py build-index
+$ cd src && uv run python main.py build-index
 
 1. Load documents
   ↓
@@ -178,7 +178,7 @@ TOP_K = 5
 # 🎬 Live Demo - Starting
 
 ```bash
-$ python main.py
+$ cd src && uv run python main.py
 ```
 
 Output:
@@ -263,12 +263,12 @@ CHUNK_SIZE = 500
 # 🚢 Deployment - Single Machine
 
 ```
-1. Install Ollama & Python deps
+1. Install uv & Ollama, then run: uv sync
 2. Copy docs/ to server
 3. Build index
 4. Run with nohup
 
-$ nohup python main.py > log &
+$ nohup uv run python main.py > log &
 ```
 
 # 🚢 Scaling - Option 1: FastAPI
@@ -343,14 +343,18 @@ Docs     Index      Build
 # 🙋 Quick Reference
 
 ```bash
-# Build index
-python main.py build-index
+# One-time setup (repository root)
+uv sync
+ollama pull qwen3:0.6b
+
+# Build index (from src/)
+cd src && uv run python main.py build-index
 
 # Run interactively
-python main.py
+uv run python main.py
 
 # Check config
-cat config.py
+cat src/config.py
 ```
 
 # 📚 Resources
